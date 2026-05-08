@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Date Tracker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    .container {
+      max-width: 1100px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    input, button {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    input {
+      flex: 1;
+    }
+    button {
+      background: #007bff;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background: #007bff;
+      color: #fff;
+    }
+    .due {
+      background: #ffe5e5;
+      color: #b30000;
+      font-weight: bold;
+    }
+    .not-due {
+      background: #e5ffe5;
+      color: #006600;
+      font-weight: bold;
+    }
+    .actions button {
+      margin-right: 5px;
+      background: #28a745;
+    }
+    .actions button.delete {
+      background: #dc3545;
+    }
+    .actions button:hover {
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <h1>Date Tracker</h1>
+  <div class="container">
+    <form id="tenantForm">
+      <input type="text" id="name" placeholder="Tenant Name" required>
+      <input type="email" id="email" placeholder="Tenant Email" required>
+      <input type="tel" id="phone" placeholder="Tenant Phone Number" required>
+      <input type="date" id="startDate" required>
+      <input type="number" id="period" placeholder="Period (months)" min="1" required>
+      <button type="submit">Add Tenant</button>
+    </form>
+
+    <button onclick="exportCSV()">Export CSV</button>
+
+    <table id="tenantTable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Start Date</th>
+          <th>Period (months)</th>
+          <th>End Date</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    const tenantForm = document.getElementById("tenantForm");
+    const tenantTable = document.getElementById("tenantTable").querySelector("tbody");
+
+    function loadTenants() {
+      return JSON.parse(localStorage.getItem("tenants") || "[]");
+    }
+
+    function saveTenants(tenants) {
+      localStorage.setItem("tenants", JSON.stringify(tenants));
+    }
+
+    function calculateEndDate(startDate, periodMonths) {
+      const start = new Date(startDate);
+      start.setMonth(start.getMonth() + parseInt(periodMonths));
+      return start.toISOString().split("T")[0];
+    }
+
+    function getStatus(endDate) {
+      const today = new Date().toISOString().split("T")[0];
+      return new Date(endDate) <= new Date(today) ? "Due" : "Not Due";
+    }
+
+    function renderTenants() {
+      const tenants = loadTenants();
+      tenantTable.innerHTML = "";
+      tenants.forEach(t => {
+        const row = document.createElement("tr");
+        const status = getStatus(t.endDate);
+        row.classList.add(status === "Due" ? "due" : "not-due");
+        row.innerHTML = `
+          <td>${t.name}</td>
+          <td>${t.email}</td>
+          <td>${t.phone}</td>
+          <td>${t.startDate}</td>
+          <td>${t.period}</td>
+          <td>${t.endDate}</td>
+          <td>${status}</td>
+          <td class="actions">
+            <button onclick="renewTenant(${t.id})">Renew</button>
+            <button class="delete" onclick="deleteTenant(${t.id})">Delete</button>
+          </td>
+        `;
+        tenantTable.appendChild(row);
+      });
+    }
+
+    tenantForm.addEventListener("submit", e => {
+      e.preventDefault();
+      const tenants = loadTenants();
+      const startDate = document.getElementById("startDate").value;
+      const period = document.getElementById("period").value;
+      const endDate = calculateEndDate(startDate, period);
+
+      tenants.push({
+        id: Date.now(),
+        name: document.getElementById("name").value,
+        email: document.getElementById("email").value,
+        phone: document.getElementById("phone").value,
+        startDate,
+        period,
+        endDate
+      });
+      saveTenants(tenants);
+      renderTenants();
+      tenantForm.reset();
+    });
+
+    function renewTenant(id) {
+      const tenants = loadTenants();
+      const tenant = tenants.find(t => t.id === id);
+      if (tenant) {
+        tenant.startDate = new Date().toISOString().split("T")[0];
+        tenant.endDate = calculateEndDate(tenant.startDate, tenant.period);
+        saveTenants(tenants);
+        renderTenants();
+      }
+    }
+
+    function deleteTenant(id) {
+      let tenants = loadTenants();
+      tenants = tenants.filter(t => t.id !== id);
+      saveTenants(tenants);
+      renderTenants();
+    }
+
+    function exportCSV() {
+      const tenants = loadTenants();
+      let csv = "Name,Email,Phone,Start Date,Period,End Date,Status\n";
+      tenants.forEach(t => {
+        csv += `${t.name},${t.email},${t.phone},${t.startDate},${t.period},${t.endDate},${getStatus(t.endDate)}\n`;
+      });
+      const blob = new Blob([csv], { type: "text/csv" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "tenants_export.csv";
+      link.click();
+    }
+
+    renderTenants();
+  </script>
+</body>
+</html>
+

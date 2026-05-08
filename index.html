@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Rent Tracker Home</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .home-container {
+      text-align: center;
+      background: #fff;
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    h1 {
+      margin-bottom: 30px;
+      color: #333;
+    }
+    .btn {
+      display: inline-block;
+      margin: 10px;
+      padding: 15px 30px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .btn-minimal {
+      background: #28a745;
+      color: #fff;
+    }
+    .btn-minimal:hover {
+      background: #218838;
+    }
+    .btn-advanced {
+      background: #007bff;
+      color: #fff;
+    }
+    .btn-advanced:hover {
+      background: #0056b3;
+    }
+    .btn-expert {
+      background: #6f42c1;
+      color: #fff;
+    }
+    .btn-expert:hover {
+      background: #5a32a3;
+    }
+  </style>
+</head>
+<body>
+  <div class="home-container">
+    <h1>Date Tracker</h1>
+    <button class="btn btn-minimal" onclick="goMinimal()">Minimal View</button>
+    <button class="btn btn-advanced" onclick="goAdvanced()">Advanced View</button>
+    <button class="btn btn-expert" onclick="goExpert()">Expert View</button>
+  </div>
+
+  <script>
+    function goMinimal() {
+      window.location.href = "./data files/mini.html";
+    }
+    function goAdvanced() {
+      window.location.href = "./data files/adv.html";
+    }
+    function goExpert() {
+      window.location.href = "./data files/expert.html";
+    }
+  </script>
+</body>
+</html>
